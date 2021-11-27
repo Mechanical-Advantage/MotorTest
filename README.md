@@ -44,10 +44,11 @@ Here are some relevant examples from other projects and resources:
 
 WPILib PWM information: https://docs.wpilib.org/en/stable/docs/software/actuators/pwm-controllers.html
 
+An Arduino-controlled FRC motor controller project: https://www.instructables.com/Cheap-and-Easy-Arduino-Thrifty-Throttle-pwm-Genera/
+This uses the standard "Servo" library which seems like the most likely way to go.
+
 A not-dissimilar project with example code: https://mrmctavish.wordpress.com/2020/03/15/using-an-arduino-to-control-a-talon-or-spark-motor-controller-using-pwm/
-
-PWM library: https://code.google.com/archive/p/arduino-pwm-frequency-library/downloads
-
-Another Arduino-controlled FRC motor controller project: https://www.instructables.com/Cheap-and-Easy-Arduino-Thrifty-Throttle-pwm-Genera/
+This one uses this PWM library: https://code.google.com/archive/p/arduino-pwm-frequency-library/downloads
+HOWEVER, it seems that FRC controllers are more easily controlled using the "Servo" library, as in the earlier example.
 
 Example of debouncing and toggling state with a button: https://www.arduino.cc/en/Tutorial/BuiltInExamples/Debounce
