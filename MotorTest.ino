@@ -1,70 +1,79 @@
 #include <Servo.h>
-#include <Wire.h>
+#include <Wire.h> 
+Servo myservo;   
 
-Servo myservo;
-int button1Pin = D8 int slider1Pin = A4 int led1Pin = A0;
-int led1State = LOW; // stores the value from potentiometer
-int button1State;
-int lastButton1State = LOW; //
+//add channel state (simple bool)
 
-unsigned long lastDebounceTime = 0; // the last time the output pin was toggled
-unsigned long debounceDelay = 50;   // the debounce time; increase if the output flickers
+const int buttonPin = 1; 
+const int ledPin = 2;  
+const double deadBand = 50;  
 
-void setup()
-{
-  pinMode(button1Pin, INPUT);
-  pinMode(slider1Pin, INPUT);
-  pinMode(led1Pin, OUTPUT);
+bool channel1; 
+bool channel2; 
+bool channel3; 
+bool channel4;
 
-  digitalWrite(led1Pin, led1state);
+int pwmValue; 
+int sliderValue;
+int buttonState; 
+int ledState = LOW; 
+int lastButtonState = LOW;  
+int buttonReading;
+ 
+unsigned long debounceTime = 0; 
+unsigned long debounceDelay = 50;
+
+void setup(){ 
+  channel1 = false; 
+  channel2 = false; 
+  channel3 = false; 
+  channel4 = false;
+
+  pinMode(buttonPin, INPUT_PULLUP);   
+  pinMode(ledPin, OUTPUT); 
+  myservo.attach(3);
 }
 
-int IsButtonPressed(int buttonpin, int buttonReading, int buttonState,
-                    int lastButtonState, int lastDebounceTime,
-                    int debounceDelay, int ledState, int ledPin)
-{
+void loop(){  
+  buttonReading = digitalRead(buttonPin);  
+  pwmValue = analogRead(D3); //PWM input first pin: D3
+  sliderValue = analogRead(A4); //analog input first pin: A4 
+  
+  int pwnValue = map(sliderValue, 0, 1023, 1000, 2000);
+ //convert analog reading from a scale of 0-1023 to a scale of 0-5(volts) 
 
-  // check to see if you just pressed the button
-  // (i.e. the input went from LOW to HIGH), and you've waited long enough
-  // since the last press to ignore any noise:
-  // If the switch changed, due to noise or pressing:
-  if (buttonReading != lastButtonState)
-  {
-    // reset the debouncing timer
-    lastDebounceTime = millis();
+//set motor speeds based on analog inputs
+  if(pwmValue < (1500 + deadBand) && pwnValue > (1500 - deadBand)) { 
+    myservo.writeMicroseconds(1500);
   }
 
-  if ((millis() - lastDebounceTime) > debounceDelay)
-  {
-    // whatever the reading is at, it's been there for longer than the debounce
-    // delay, so take it as the actual current state:
+  if(pwmValue > (2.5 + deadBand)) { 
+    myservo.writeMicroseconds(2000);
+  }  
 
-    // if the button state has changed:
-    if (buttonReading != buttonState)
-    {
+  if(pwmValue < (2.5 - deadBand)) { 
+    myservo.writeMicroseconds(1000);
+  }
+
+//Debounce Button code --> turn this into a function
+}  
+
+
+int isButtonPressed(int ledPin, int buttonPin, int lastButtonState, int lastLedState) {
+
+  if(buttonReading != lastButtonState) {
+    debounceTime = millis(); 
+  } 
+  if(millis() - debounceTime > debounceDelay){ 
+    if(buttonReading != buttonState) {
       buttonState = buttonReading;
-
-      // only toggle the LED if the new button state is HIGH
-      if (buttonState == HIGH)
-      {
-        led1State = !ledState;
-      }
+    } 
+    if(buttonState == HIGH){ 
+      ledState = HIGH;
     }
-  }
+  } 
 
-  // set the LED:
-  digitalWrite(ledPin, led1State);
-  return ledState;
+  digitalWrite(ledPin, ledState);  
 
-  // save the reading. Next time through the loop, it'll be the lastButtonState:
-  lastButtonState = buttonReading;
-}
-
-void loop()
-{
-  int button1Reading = digitalRead(button1Pin);
-  if (IsButtonPressed() == HIGH)
-  {
-    // read slider values and set outputs based on those values
-  }
-}
+  lastButtonState = buttonReading; 
+} 
