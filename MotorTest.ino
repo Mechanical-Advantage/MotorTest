@@ -4,8 +4,8 @@ Servo myservo;
 
 //add channel state (simple bool)
 
-const int buttonPin = 1;
-const int ledPin = 2;
+const int button1Pin = 1;
+const int led1Pin = 2;
 const double deadBand = 0.5; 
 const double gain = 200;
 
@@ -18,13 +18,28 @@ int pwm1Value;
 int pwm2Value;
 int pwm3Value;
 int pwm4Value;
+
 int slider1Value;
 int slider2Value;
 int slider3Value;
 int slider4Value;
-int buttonState;
-int ledState = LOW;
-int lastButtonState = LOW;
+
+int button1State;
+int button2State;
+int button3State;
+int button4State;
+
+int lastButton1State = LOW;
+int lastButton2State = LOW;
+int lastButton3State = LOW;
+int lastButton4State = LOW;
+
+int led1State = LOW;
+int led2State = LOW;
+int led3State = LOW;
+int led4State = LOW;
+
+
 int buttonReading;
 
 unsigned long debounceTime = 0;
@@ -51,32 +66,40 @@ void loop()
   slider4Value = analogRead(A7);
 
   int pwm1Value = map(slider1Value, 0, 1023, 0, 5);
+  int pwm2Value = map(slider1Value, 0, 1023, 0, 5);
+  int pwm3Value = map(slider1Value, 0, 1023, 0, 5);
+  int pwm4Value = map(slider1Value, 0, 1023, 0, 5);
+
+  isButtonPressed(led1Pin, button1Pin, lastButton1State, channel1)
+  toggleChannelState(channel1)
+  toggleLEDState(led1State)
+  slider(pwm1Value)
+
+}
 
 
-
-  //convert analog reading from a scale of 0-1023 to a scale of 0-5(volts)  
-  
-  if (pwm1Value < (2.5 + deadBand) && pwm1Value > (2.5 - deadBand))
+//convert analog reading from a scale of 0-1023 to a scale of 0-5(volts)  
+  void slider(pwmValue)
+  {
+    if (pwmValue < (2.5 + deadBand) && pwmValue > (2.5 - deadBand))
   {
     myservo.writeMicroseconds(1500);// stop
   }
 
-  if (pwm1Value > (2.5 + deadBand))
+  if (pwmValue > (2.5 + deadBand))
   {
-    myservo.writeMicroseconds(((pwm1Value - (2.5 + deadBand)) * gain) + 1500);
+    myservo.writeMicroseconds(((pwmValue - (2.5 + deadBand)) * gain) + 1500);
   }
 
-  if (pwm1Value < (2.5 - deadBand))
+  if (pwmValue < (2.5 - deadBand))
   {
-    myservo.writeMicroseconds(((pwm1Value - (2.5 + deadBand)) * gain) + 1500);
+    myservo.writeMicroseconds(((pwmValue - (2.5 + deadBand)) * gain) + 1500);
   }
-
- 
-}
+  }
   
 
  //Debounce Button code 
-void isButtonPressed(int ledPin, int buttonPin, int lastButtonState, int lastLedState, bool channel)
+void isButtonPressed(int ledPin, int buttonPin, int lastButtonState, bool channel)
 {
   buttonReading = digitalRead(buttonPin); 
 
@@ -88,15 +111,6 @@ void isButtonPressed(int ledPin, int buttonPin, int lastButtonState, int lastLed
     if (millis() - debounceTime > debounceDelay)
     { 
       buttonState = buttonReading;
-
-    if (buttonState == HIGH)
-    {
-      ledState = HIGH;
-    }
-    else if (buttonState == LOW)
-    {
-      ledState = LOW;
-    }
     
     }
   }
@@ -106,6 +120,38 @@ void isButtonPressed(int ledPin, int buttonPin, int lastButtonState, int lastLed
 
   lastButtonState = buttonReading;
 
+}
+
+void toggleChannelState(channel)
+{
+  if (buttonstate == HIGH)
+  {
+    if (channel == false)
+    {
+      channel = true;
+    }
+
+    if (channel == true)
+    {
+      channel = false;
+    }
+  }
+}
+
+void togleLEDState(ledState)
+{
+  if (buttonstate == HIGH)
+  {
+    if (ledState == HIGH)
+    {
+      ledState = LOW;
+    }
+
+    if (ledState == LOW)
+    {
+      ledState = HIGH;
+    }
+  }
 }
 
 
