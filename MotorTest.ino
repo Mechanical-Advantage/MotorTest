@@ -2,11 +2,10 @@
 #include <Wire.h>
 Servo myservo;
 
-//add channel state (simple bool)
-
-const int button1Pin = 1;
-const int led1Pin = 2;
-const double deadBand = 0.5; 
+// add channel state (simple bool)
+const int button1Pin = 8;
+const int led1Pin = A0;
+const double deadBand = 0.5;
 const double gain = 200;
 
 bool channel1;
@@ -24,12 +23,12 @@ int slider2Value;
 int slider3Value;
 int slider4Value;
 
-int button1State;
+int button1State = HIGH;
 int button2State;
 int button3State;
 int button4State;
 
-int lastButton1State = LOW;
+int lastButton1State = HIGH;
 int lastButton2State = LOW;
 int lastButton3State = LOW;
 int lastButton4State = LOW;
@@ -39,7 +38,6 @@ int led2State = LOW;
 int led3State = LOW;
 int led4State = LOW;
 
-
 int buttonReading;
 
 unsigned long debounceTime = 0;
@@ -47,20 +45,28 @@ unsigned long debounceDelay = 50;
 
 void setup()
 {
+  Serial.begin(9600);
+  Serial.write("Start");
+
   channel1 = false;
   channel2 = false;
   channel3 = false;
   channel4 = false;
 
-  pinMode(buttonPin, INPUT_PULLUP);
-  pinMode(ledPin, OUTPUT);
+  pinMode(button1Pin, INPUT_PULLUP);
+  pinMode(led1Pin, OUTPUT);
   myservo.attach(3);
+
+//  digitalWrite(A0, HIGH);
+//  delay(1000);
+//  digitalWrite(A0, LOW);
+  
 }
 
 void loop()
 {
-  //pwmValue = digitalRead(D3);    //PWM input first pin: D3
-  slider1Value = analogRead(A4); //analog input first pin: A4
+  // pwmValue = digitalRead(D3);    //PWM input first pin: D3
+  slider1Value = analogRead(A4); // analog input first pin: A4
   slider2Value = analogRead(A5);
   slider3Value = analogRead(A6);
   slider4Value = analogRead(A7);
@@ -70,20 +76,18 @@ void loop()
   int pwm3Value = map(slider1Value, 0, 1023, 0, 5);
   int pwm4Value = map(slider1Value, 0, 1023, 0, 5);
 
-  isButtonPressed(led1Pin, button1Pin, lastButton1State, channel1)
-  toggleChannelState(channel1)
-  toggleLEDState(led1State)
-  slider(pwm1Value)
-
+  isButtonPressed(led1Pin, button1Pin, lastButton1State, channel1);
+  toggleChannelState(channel1);
+  toggleLEDState(led1State);
+  slider(pwm1Value);
 }
 
-
-//convert analog reading from a scale of 0-1023 to a scale of 0-5(volts)  
-  void slider(pwmValue)
+// convert analog reading from a scale of 0-1023 to a scale of 0-5(volts)
+void slider(int pwmValue)
+{
+  if (pwmValue < (2.5 + deadBand) && pwmValue > (2.5 - deadBand))
   {
-    if (pwmValue < (2.5 + deadBand) && pwmValue > (2.5 - deadBand))
-  {
-    myservo.writeMicroseconds(1500);// stop
+    myservo.writeMicroseconds(1500); // stop
   }
 
   if (pwmValue > (2.5 + deadBand))
@@ -95,36 +99,64 @@ void loop()
   {
     myservo.writeMicroseconds(((pwmValue - (2.5 + deadBand)) * gain) + 1500);
   }
-  }
-  
+}
 
- //Debounce Button code 
+// Debounce Button code
 void isButtonPressed(int ledPin, int buttonPin, int lastButtonState, bool channel)
 {
-  buttonReading = digitalRead(buttonPin); 
+  int buttonReading = digitalRead(buttonPin);
+
+  Serial.print("INITIAL READ: ");
+  Serial.print(buttonReading);
+  Serial.print(" ");
+  Serial.print(button1State);
+  Serial.print(" ");
+  Serial.println(channel1);
 
   if (buttonReading != lastButtonState)
   {
 
     debounceTime = millis();
-
-    if (millis() - debounceTime > debounceDelay)
-    { 
-      buttonState = buttonReading;
-    
-    }
+    Serial.println("MILLIS UPDATE");
   }
+
+    if ((millis() - debounceTime) > debounceDelay)
+    {
+      
+      Serial.println("FIRST IF");
+
+      if (buttonReading != button1State){
+
+        Serial.println("SECOND IF");
+
+        button1State = buttonReading;
+
+        Serial.print("BUTTON STATE UPDATE: ");
+        Serial.print(button1State);
+        Serial.print(" ");
+        Serial.println(channel1);
+
+        if (button1State==LOW){
+          channel1 = !channel1;
+
+          Serial.print("CHANNEL STATE UPDATE: ");
+          Serial.println(channel1);
+
+        }
+
+      }
+      
+    }
   
 
-  digitalWrite(ledPin, ledState);
+  digitalWrite(led1Pin, channel1 ? HIGH : LOW);
 
   lastButtonState = buttonReading;
-
 }
 
-void toggleChannelState(channel)
+void toggleChannelState(bool channel)
 {
-  if (buttonstate == HIGH)
+  if (button1State == HIGH)
   {
     if (channel == false)
     {
@@ -138,22 +170,13 @@ void toggleChannelState(channel)
   }
 }
 
-void togleLEDState(ledState)
+void toggleLEDState(int ledState)
 {
-  if (buttonstate == HIGH)
+  if (channel1 == HIGH)
   {
-    if (ledState == HIGH)
-    {
-      ledState = LOW;
-    }
-
-    if (ledState == LOW)
-    {
-      ledState = HIGH;
-    }
+    ledState = HIGH;
+  }
+  if (channel1 == LOW){
+    ledState = LOW;
   }
 }
-
-
-
- 
