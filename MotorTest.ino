@@ -57,10 +57,9 @@ void setup()
   pinMode(led1Pin, OUTPUT);
   myservo.attach(3);
 
-//  digitalWrite(A0, HIGH);
-//  delay(1000);
-//  digitalWrite(A0, LOW);
-  
+  //  digitalWrite(A0, HIGH);
+  //  delay(1000);
+  //  digitalWrite(A0, LOW);
 }
 
 void loop()
@@ -76,7 +75,10 @@ void loop()
   int pwm3Value = map(slider1Value, 0, 1023, 0, 5);
   int pwm4Value = map(slider1Value, 0, 1023, 0, 5);
 
-  isButtonPressed(led1Pin, button1Pin, lastButton1State, channel1);
+  isButtonPressed(button1Pin, button1State, lastButton1State, channel1);
+  // Update LED representing the channel state
+  digitalWrite(led1Pin, channel1 ? HIGH : LOW);
+
   toggleChannelState(channel1);
   toggleLEDState(led1State);
   slider(pwm1Value);
@@ -102,54 +104,38 @@ void slider(int pwmValue)
 }
 
 // Debounce Button code
-void isButtonPressed(int ledPin, int buttonPin, int lastButtonState, bool channel)
+//
+// Reads a button, applies debouncing logic, and changes channel state if pressed
+//
+// buttonPin: which pin to read
+// buttonState: reference to variable holding current button state
+// lastButtonState: reference to variable holding previous button state
+// channel: reference to the channel state associated with this button
+void isButtonPressed(int buttonPin, int &buttonState, int &lastButtonState, bool &channel)
 {
-  int buttonReading = digitalRead(buttonPin);
+  int buttonReading = digitalRead(buttonPin); // Current state of the button
 
-  Serial.print("INITIAL READ: ");
-  Serial.print(buttonReading);
-  Serial.print(" ");
-  Serial.print(button1State);
-  Serial.print(" ");
-  Serial.println(channel1);
-
+  // If it's still changing, update the time it last changed
   if (buttonReading != lastButtonState)
   {
-
     debounceTime = millis();
-    Serial.println("MILLIS UPDATE");
   }
 
-    if ((millis() - debounceTime) > debounceDelay)
+  // If it's been stable for long enough we can assess whether it's changed
+  if ((millis() - debounceTime) > debounceDelay)
+  {
+    // Has it changed?
+    if (buttonReading != buttonState)
     {
-      
-      Serial.println("FIRST IF");
+      buttonState = buttonReading;
 
-      if (buttonReading != button1State){
-
-        Serial.println("SECOND IF");
-
-        button1State = buttonReading;
-
-        Serial.print("BUTTON STATE UPDATE: ");
-        Serial.print(button1State);
-        Serial.print(" ");
-        Serial.println(channel1);
-
-        if (button1State==LOW){
-          channel1 = !channel1;
-
-          Serial.print("CHANNEL STATE UPDATE: ");
-          Serial.println(channel1);
-
-        }
-
+      // If LOW the button is pressed, so switch channel state
+      if (buttonState == LOW)
+      {
+        channel = !channel;
       }
-      
     }
-  
-
-  digitalWrite(led1Pin, channel1 ? HIGH : LOW);
+  }
 
   lastButtonState = buttonReading;
 }
@@ -176,7 +162,8 @@ void toggleLEDState(int ledState)
   {
     ledState = HIGH;
   }
-  if (channel1 == LOW){
+  if (channel1 == LOW)
+  {
     ledState = LOW;
   }
 }
