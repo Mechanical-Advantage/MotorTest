@@ -1,105 +1,73 @@
 #include <Servo.h>
 #include <Wire.h>
-Servo myservo;
 
-// add channel state (simple bool)
-const int button1Pin = 8;
-const int led1Pin = A0;
-const double deadBand = 0.5;
-const double gain = 200;
+#define MAX_CHAN 4
+#define PWM_OFF 1500 // pulse width for stopped
+#define PWM_MIN 1000 // pulse width for maximum reverse
+#define PWM_MAX 2000 // pulse width for maximum forward
 
-bool channel1;
-bool channel2;
-bool channel3;
-bool channel4;
+Servo myservo[MAX_CHAN];
+bool channel[MAX_CHAN];
+int buttonState[MAX_CHAN];
+int lastButtonState[MAX_CHAN];
 
-int pwm1Value;
-int pwm2Value;
-int pwm3Value;
-int pwm4Value;
-
-int slider1Value;
-int slider2Value;
-int slider3Value;
-int slider4Value;
-
-int button1State = HIGH;
-int button2State;
-int button3State;
-int button4State;
-
-int lastButton1State = HIGH;
-int lastButton2State = LOW;
-int lastButton3State = LOW;
-int lastButton4State = LOW;
-
-int led1State = LOW;
-int led2State = LOW;
-int led3State = LOW;
-int led4State = LOW;
-
-int buttonReading;
+// These arrays hold the Arduino pin identifiers for channels 1,2,3,4 in order
+const int buttonPin[] = {8, 10, 11, 12};
+const int ledPin[] = {A0, A1, A2, A3};
+const int sliderPin[] = {A4, A5, A6, A7};
+const int pwmPin[] = {3, 5, 6, 9};
 
 unsigned long debounceTime = 0;
-unsigned long debounceDelay = 50;
+const unsigned long debounceDelay = 50;
 
 void setup()
 {
-  Serial.begin(9600);
-  Serial.write("Start");
+  //  Serial.begin(9600);
+  //  Serial.write("Start");
+  int i;
 
-  channel1 = false;
-  channel2 = false;
-  channel3 = false;
-  channel4 = false;
+  for (i = 0; i < MAX_CHAN; i++)
+  {
+    channel[i] = false; //channel OFF by default
+    pinMode(buttonPin[i], INPUT_PULLUP);
+    pinMode(ledPin[i], OUTPUT);
+    pinMode(sliderPin[i], INPUT);
+    lastButtonState[i] = HIGH; // Pulled up so it is HIGH
+    buttonState[i] = HIGH;     // Pulled up so it is HIGH
+    myservo[i].attach(pwmPin[i]);
+    // Turn on all LEDS
+    digitalWrite(ledPin[i], HIGH);
+  }
 
-  pinMode(button1Pin, INPUT_PULLUP);
-  pinMode(led1Pin, OUTPUT);
-  myservo.attach(3);
+  // Leave LEDs on briefly to show they work
+  delay(500);
 
-  //  digitalWrite(A0, HIGH);
-  //  delay(1000);
-  //  digitalWrite(A0, LOW);
+  //Turn off all LEDS
+  for (i = 0; i < MAX_CHAN; i++)
+  {
+    digitalWrite(ledPin[i], LOW);
+  }
 }
 
 void loop()
 {
-  // pwmValue = digitalRead(D3);    //PWM input first pin: D3
-  slider1Value = analogRead(A4); // analog input first pin: A4
-  slider2Value = analogRead(A5);
-  slider3Value = analogRead(A6);
-  slider4Value = analogRead(A7);
+  int i;
+  int pwmValue;
+  int sliderValue;
 
-  int pwm1Value = map(slider1Value, 0, 1023, 0, 5);
-  int pwm2Value = map(slider1Value, 0, 1023, 0, 5);
-  int pwm3Value = map(slider1Value, 0, 1023, 0, 5);
-  int pwm4Value = map(slider1Value, 0, 1023, 0, 5);
-
-  isButtonPressed(button1Pin, button1State, lastButton1State, channel1);
-  // Update LED representing the channel state
-  digitalWrite(led1Pin, channel1 ? HIGH : LOW);
-
-  toggleChannelState(channel1);
-  toggleLEDState(led1State);
-  slider(pwm1Value);
-}
-
-// convert analog reading from a scale of 0-1023 to a scale of 0-5(volts)
-void slider(int pwmValue)
-{
-  if (pwmValue < (2.5 + deadBand) && pwmValue > (2.5 - deadBand))
+  for (i = 0; i < MAX_CHAN; i++)
   {
-    myservo.writeMicroseconds(1500); // stop
-  }
-
-  if (pwmValue > (2.5 + deadBand))
-  {
-    myservo.writeMicroseconds(((pwmValue - (2.5 + deadBand)) * gain) + 1500);
-  }
-
-  if (pwmValue < (2.5 - deadBand))
-  {
-    myservo.writeMicroseconds(((pwmValue - (2.5 + deadBand)) * gain) + 1500);
+    // Read/debounce button and update channel state
+    isButtonPressed(buttonPin[i], buttonState[i], lastButtonState[i], channel[i]);
+    // Update LED representing the channel state
+    digitalWrite(ledPin[i], channel[i] ? HIGH : LOW);
+    // Read current slider value
+    sliderValue = analogRead(sliderPin[i]);
+    // PWM pulse width is from 1000 to 2000, where 1500 is stopped
+    // If channel is ON scale input reading to pulse width, otherwise use stop value
+    pwmValue = channel[i] ? map(sliderValue, 0, 1023, PWM_MIN, PWM_MAX) : PWM_OFF;
+    // Set the output
+    myservo[i].writeMicroseconds(pwmValue);
   }
 }
 
@@ -138,32 +106,4 @@ void isButtonPressed(int buttonPin, int &buttonState, int &lastButtonState, bool
   }
 
   lastButtonState = buttonReading;
-}
-
-void toggleChannelState(bool channel)
-{
-  if (button1State == HIGH)
-  {
-    if (channel == false)
-    {
-      channel = true;
-    }
-
-    if (channel == true)
-    {
-      channel = false;
-    }
-  }
-}
-
-void toggleLEDState(int ledState)
-{
-  if (channel1 == HIGH)
-  {
-    ledState = HIGH;
-  }
-  if (channel1 == LOW)
-  {
-    ledState = LOW;
-  }
 }
